@@ -8,6 +8,7 @@ import net.minecraft.init.Blocks;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
+import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
@@ -62,6 +63,18 @@ public final class StructureSearch {
     }
 
     public static boolean start(EntityPlayerMP player, LocatableStructure structure, boolean undiscovered) {
+        return start(player, structure, undiscovered, false);
+    }
+
+    /**
+     * Starts a structure search that reports the coordinates instead of moving the player.
+     */
+    public static boolean startLocate(EntityPlayerMP player, LocatableStructure structure) {
+        return start(player, structure, false, true);
+    }
+
+    private static boolean start(EntityPlayerMP player, LocatableStructure structure, boolean undiscovered,
+                                 boolean reportOnly) {
         WorldServer world = player.getServerWorld();
         if (SEARCHES.containsKey(world)) {
             player.sendStatusMessage(new TextComponentTranslation("message.iceandfire.structure_teleporter.busy"), true);
@@ -73,6 +86,12 @@ public final class StructureSearch {
         if (!undiscovered) {
             BlockPos target = StructureLocatorData.findNearest(world, structure, origin);
             if (target != null && isExistingChunk(world, target)) {
+                if (reportOnly) {
+                    player.sendMessage(new TextComponentString("Nearest " + structure.getId()
+                            + " found at X=" + target.getX() + " Y=" + target.getY() + " Z=" + target.getZ()
+                            + " (dimension " + world.provider.getDimension() + ")"));
+                    return true;
+                }
                 return teleport(player, target);
             }
         }
@@ -84,7 +103,7 @@ public final class StructureSearch {
             return false;
         }
 
-        SEARCHES.put(world, new Search(player.getUniqueID(), structure, origin, scanSaved, known));
+        SEARCHES.put(world, new Search(player.getUniqueID(), structure, origin, scanSaved, known, reportOnly));
         if (scanSaved) {
             player.sendMessage(new TextComponentTranslation("message.iceandfire.structure_teleporter.searching"));
         } else {
@@ -104,7 +123,7 @@ public final class StructureSearch {
             return;
         }
         EntityPlayerMP player = (EntityPlayerMP) world.getPlayerEntityByUUID(search.player);
-        if (player == null || player.isDead || !player.capabilities.isCreativeMode) {
+        if (player == null || player.isDead || (!search.reportOnly && !player.capabilities.isCreativeMode)) {
             SEARCHES.remove(world);
             return;
         }
@@ -134,6 +153,10 @@ public final class StructureSearch {
         SEARCHES.remove(world);
         if (target == null) {
             player.sendMessage(new TextComponentTranslation("message.iceandfire.structure_teleporter.not_found"));
+        } else if (search.reportOnly) {
+            player.sendMessage(new TextComponentString("Nearest " + search.structure.getId()
+                    + " found at X=" + target.getX() + " Y=" + target.getY() + " Z=" + target.getZ()
+                    + " (dimension " + world.provider.getDimension() + ")"));
         } else {
             teleport(player, target);
         }
@@ -249,6 +272,7 @@ public final class StructureSearch {
         private final Set<BlockPos> known;
         private final LocatableStructure structure;
         private final BlockPos origin;
+        private final boolean reportOnly;
         private final List<Chunk> loadedChunks = new ArrayList<>();
         private final List<BlockPos> nearbySites = new ArrayList<>();
         private boolean scanningSaved;
@@ -263,12 +287,13 @@ public final class StructureSearch {
         private double nearestDistance = Double.POSITIVE_INFINITY;
 
         private Search(UUID player, LocatableStructure structure, BlockPos origin, boolean scanningSaved,
-                       @Nullable Set<BlockPos> known) {
+                       @Nullable Set<BlockPos> known, boolean reportOnly) {
             this.known = known;
             this.player = player;
             this.structure = structure;
             this.origin = origin;
             this.scanningSaved = scanningSaved;
+            this.reportOnly = reportOnly;
         }
 
         private boolean hasMoreSavedCandidates() {

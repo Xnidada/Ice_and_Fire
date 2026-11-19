@@ -4,6 +4,7 @@ import com.github.alexthe666.iceandfire.compat.CraftTweakerCompatBridge;
 import com.github.alexthe666.iceandfire.compat.OneProbeCompatBridge;
 import com.github.alexthe666.iceandfire.compat.ThaumcraftCompatBridge;
 import com.github.alexthe666.iceandfire.compat.TinkersCompatBridge;
+import com.github.alexthe666.iceandfire.command.CommandLocateDragonStructure;
 import com.github.alexthe666.iceandfire.entity.IafEntityRegistry;
 import com.github.alexthe666.iceandfire.entity.IafVillagerRegistry;
 import com.github.alexthe666.iceandfire.event.ServerEvents;
@@ -190,6 +191,11 @@ public class IceAndFire {
         };
 
         OneProbeCompatBridge.loadInit();
+    }
+
+    @EventHandler
+    public void serverStarting(FMLServerStartingEvent event) {
+        event.registerServerCommand(new CommandLocateDragonStructure());
     }
 
     @EventHandler
