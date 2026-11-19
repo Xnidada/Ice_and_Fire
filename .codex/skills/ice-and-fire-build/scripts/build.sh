@@ -31,7 +31,12 @@ task="${1:-build}"
 "$gradle_bin" --no-daemon "${offline_args[@]}" "$task"
 
 if [[ "$task" == "build" || "$task" == "assemble" ]]; then
-    artifact="build/libs/Ice and Fire-2.1.0.jar"
+    mod_version="$(awk -F '=' '/^[[:space:]]*mod_version[[:space:]]*=/{gsub(/[[:space:]]/, "", $2); print $2; exit}' gradle.properties)"
+    if [[ -z "$mod_version" ]]; then
+        echo "Could not read mod_version from gradle.properties" >&2
+        exit 1
+    fi
+    artifact="build/libs/Ice and Fire-${mod_version}.jar"
     if [[ -f "$artifact" ]]; then
         echo "Built artifact: $artifact"
     else

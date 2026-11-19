@@ -36,10 +36,6 @@ BUILD_ONLINE=1 .codex/skills/ice-and-fire-build/scripts/build.sh build
 
 `BUILD_ONLINE=1` sets both HTTP and HTTPS proxy variables to `192.168.30.118:7890`; dependencies remain in `/opt/minecraft-tools/gradle-home` for subsequent offline builds. Do not change the project's Gradle or Java version unless the build itself requires a repository-level migration.
 
-The standard obfuscated mod artifact is:
-
-```text
-build/libs/Ice and Fire-2.1.0.jar
-```
+The standard obfuscated mod artifact is `build/libs/Ice and Fire-<mod_version>.jar`, where `<mod_version>` comes from `gradle.properties`.
 
 After a build, report the task result and artifact path. A successful `build` task is the required validation; there are currently no project tests.
